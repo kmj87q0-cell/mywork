@@ -1,12 +1,15 @@
 import streamlit as st
 import sqlite3
 import hashlib
+from pathlib import Path
 
+BASE_DIR = Path(__file__).parent
+DB_PATH = BASE_DIR / "myproject.db"
 # --------------------------------------------------
 # 1. DB 및 테이블 초기화 함수 (myproject.db)
 # --------------------------------------------------
 def init_db():
-    conn = sqlite3.connect('myproject.db')
+    conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     
     # 1) users 테이블 생성
@@ -54,7 +57,7 @@ st.sidebar.title("🔑 회원 관리 시스템")
 if st.session_state["user"] is None:
     auth_menu = st.sidebar.radio("선택", ["로그인", "회원가입"])
     
-    conn = sqlite3.connect('myproject.db')
+    conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     
     if auth_menu == "로그인":
