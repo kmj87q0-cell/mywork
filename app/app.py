@@ -127,8 +127,8 @@ coll1, coll2 = st.columns((4,1))
 with coll1:
     with st.expander('2차시_ 사진'):
         st.title('사진......')
-        imgpath1 = './img/machinelearning.jpg'
-        st.image(imgpath1)
+        imgpath1 = BASE_DIR / "img" / "machinelearning.jpg"
+        st.image(str(imgpath1))
 with coll2:
     with st.expander('Tips...'):
         st.subheader('Tips...')
