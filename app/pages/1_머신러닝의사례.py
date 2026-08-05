@@ -1,6 +1,7 @@
 import streamlit as st
 import streamlit.components.v1 as components
 import os
+from pathlib import Path
 
 # 페이지 기본 설정
 st.set_page_config(
@@ -16,7 +17,8 @@ st.markdown("---")
 
 # 1. smartfarm.html 파일 경로 설정
 # (기본적으로 app.py가 있는 프로젝트 최상위 폴더에 위치하도록 설정합니다)
-html_file_path = "./htmls/smartfarm.html"
+BASE_DIR = Path(__file__).resolve().parent.parent
+html_file_path = BASE_DIR / "htmls" / "smartfarm.html"
 
 # 2. HTML 파일 읽기 및 iframe 렌더링
 if os.path.exists(html_file_path):
