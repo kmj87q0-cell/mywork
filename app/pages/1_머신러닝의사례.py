@@ -17,7 +17,7 @@ st.markdown("---")
 
 # 1. smartfarm.html 파일 경로 설정
 # (기본적으로 app.py가 있는 프로젝트 최상위 폴더에 위치하도록 설정합니다)
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parents.[1]
 html_file_path = BASE_DIR / "htmls" / "smartfarm.html"
 
 # 2. HTML 파일 읽기 및 iframe 렌더링
@@ -34,4 +34,4 @@ if os.path.exists(html_file_path):
     )
 else:
     st.error(f"❌ '{html_file_path}' 파일을 찾을 수 없습니다.")
-    st.warning("프로젝트 최상위 폴더(`app.py`와 같은 위치)에 `preview.html` 파일을 배치해 주세요.")
+    st.warning("app/htmls 폴더에 smartfarm.html 파일이 있는지 확인하세요.")
