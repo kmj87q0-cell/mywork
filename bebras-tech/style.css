@@ -1,0 +1,343 @@
+/* ======================================================
+   Bebras Technology Challenge v1.0
+   style.css
+====================================================== */
+
+/* ===== 기본 설정 ===== */
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+
+    font-family:"Malgun Gothic",sans-serif;
+
+    background:#eef4fb;
+
+    color:#333;
+
+    line-height:1.6;
+
+}
+
+
+/* ===== Header ===== */
+
+header{
+
+    background:linear-gradient(90deg,#3b82f6,#2563eb);
+
+    color:white;
+
+    text-align:center;
+
+    padding:25px;
+
+    box-shadow:0 4px 10px rgba(0,0,0,.15);
+
+}
+
+header h1{
+
+    font-size:34px;
+
+    margin-bottom:8px;
+
+}
+
+.subtitle{
+
+    font-size:18px;
+
+}
+
+
+/* ===== 공통 Section ===== */
+
+section{
+
+    width:90%;
+
+    max-width:1100px;
+
+    margin:25px auto;
+
+    background:white;
+
+    border-radius:15px;
+
+    padding:20px;
+
+    box-shadow:0 5px 15px rgba(0,0,0,.1);
+
+}
+
+section h2{
+
+    margin-bottom:15px;
+
+    color:#2563eb;
+
+}
+
+
+/* ===== 문제 설명 ===== */
+
+#questionText{
+
+    background:#f5f9ff;
+
+    border-left:8px solid #3b82f6;
+
+    padding:18px;
+
+    border-radius:10px;
+
+    font-size:18px;
+
+}
+
+
+/* ===== 게임 영역 ===== */
+
+#gameArea{
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+}
+
+
+/* ===== 격자판 ===== */
+
+#grid{
+
+    display:grid;
+
+    grid-template-columns:repeat(10,60px);
+
+    grid-template-rows:repeat(8,60px);
+
+    gap:3px;
+
+}
+
+
+/* 칸 */
+
+.cell{
+
+    width:60px;
+
+    height:60px;
+
+    border:1px solid #cccccc;
+
+    background:white;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    font-size:28px;
+
+    transition:.3s;
+
+}
+
+
+/* 마우스 효과 */
+
+.cell:hover{
+
+    background:#dbeafe;
+
+}
+
+
+/* ===== 보기 버튼 ===== */
+
+.answers{
+
+    display:flex;
+
+    justify-content:center;
+
+    gap:20px;
+
+    flex-wrap:wrap;
+
+}
+
+
+.answerBtn{
+
+    width:90px;
+
+    height:60px;
+
+    border:none;
+
+    border-radius:10px;
+
+    background:#2563eb;
+
+    color:white;
+
+    font-size:22px;
+
+    cursor:pointer;
+
+    transition:.3s;
+
+}
+
+
+.answerBtn:hover{
+
+    background:#1d4ed8;
+
+    transform:scale(1.08);
+
+}
+
+
+/* ===== 실행 버튼 ===== */
+
+#controlPanel{
+
+    display:flex;
+
+    justify-content:center;
+
+    gap:20px;
+
+    flex-wrap:wrap;
+
+}
+
+
+#controlPanel button{
+
+    width:170px;
+
+    height:55px;
+
+    border:none;
+
+    border-radius:10px;
+
+    font-size:20px;
+
+    cursor:pointer;
+
+    color:white;
+
+    transition:.3s;
+
+}
+
+
+/* 실행 */
+
+#runBtn{
+
+    background:#10b981;
+
+}
+
+
+/* 제출 */
+
+#submitBtn{
+
+    background:#3b82f6;
+
+}
+
+
+/* 다시하기 */
+
+#resetBtn{
+
+    background:#ef4444;
+
+}
+
+
+#controlPanel button:hover{
+
+    transform:translateY(-3px);
+
+    box-shadow:0 8px 15px rgba(0,0,0,.2);
+
+}
+
+
+/* ===== 결과 ===== */
+
+#resultMessage{
+
+    background:#fff8db;
+
+    border-left:8px solid gold;
+
+    border-radius:10px;
+
+    padding:18px;
+
+    font-size:22px;
+
+    text-align:center;
+
+}
+
+
+/* ===== Footer ===== */
+
+footer{
+
+    margin-top:40px;
+
+    background:#1e293b;
+
+    color:white;
+
+    text-align:center;
+
+    padding:18px;
+
+}
+
+
+/* ===== 반응형 ===== */
+
+@media(max-width:900px){
+
+    #grid{
+
+        grid-template-columns:repeat(10,40px);
+
+        grid-template-rows:repeat(8,40px);
+
+    }
+
+    .cell{
+
+        width:40px;
+
+        height:40px;
+
+        font-size:20px;
+
+    }
+
+}

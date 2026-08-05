@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>비버 스마트 팜의 복합 환경 제어 시스템</title>
+    <style>
+        :root {
+            --primary: #0d9488;
+            --primary-hover: #0f766e;
+            --bg: #f0fdfa;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-sub: #475569;
+            --border: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            position: relative;
+            min-height: 100vh;
+        }
+
+        #fx-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        .container {
+            max-width: 760px;
+            width: 100%;
+            background: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+            padding: 30px;
+            position: relative;
+            z-index: 1;
+        }
+
+        header {
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 20px;
+            margin-bottom: 25px;
+        }
+
+        .badge {
+            background-color: #ccfbf1;
+            color: #0f766e;
+            font-size: 0.85rem;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            color: var(--text-main);
+            font-weight: 800;
+        }
+
+        .story-box {
+            background-color: #f8fafc;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+            border: 1px solid var(--border);
+        }
+
+        .rule-card {
+            background-color: #f0fdf4;
+            border-left: 4px solid #10b981;
+            padding: 15px;
+            margin: 12px 0;
+            border-radius: 0 8px 8px 0;
+            font-size: 0.9rem;
+        }
+
+        /* Sensor Simulator */
+        .sim-section {
+            background: #fafafa;
+            border: 2px dashed #cbd5e1;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .sim-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .sensor-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .sensor-btn {
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            user-select: none;
+        }
+
+        .sensor-btn.active {
+            border-color: var(--primary);
+            background-color: #f0fdfa;
+            box-shadow: 0 4px 10px rgba(13, 148, 136, 0.15);
+        }
+
+        .sensor-icon { font-size: 1.4rem; }
+        .sensor-label { font-size: 0.8rem; font-weight: 700; }
+        
+        .sensor-state {
+            font-size: 0.7rem;
+            font-weight: 800;
+            padding: 2px 6px;
+            border-radius: 10px;
+            background: #e2e8f0;
+            color: #64748b;
+        }
+
+        .sensor-btn.active .sensor-state {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Dual Actuator Status Box */
+        .actuator-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .actuator-card {
+            background: white;
+            border: 2px solid #cbd5e1;
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .actuator-card.active {
+            background-color: #d1fae5;
+            border-color: #34d399;
+            color: #065f46;
+        }
+
+        .actuator-card.inactive {
+            background-color: #fef2f2;
+            border-color: #fca5a5;
+            color: #991b1b;
+        }
+
+        /* Table & Options */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            font-size: 0.85rem;
+            text-align: center;
+        }
+
+        .data-table th, .data-table td {
+            border: 1px solid var(--border);
+            padding: 8px;
+        }
+
+        .data-table th {
+            background-color: #f1f5f9;
+            color: #334155;
+        }
+
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .option-btn {
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .option-btn:hover {
+            border-color: #94a3b8;
+            background-color: #f8fafc;
+        }
+
+        .option-btn.selected {
+            border-color: var(--primary);
+            background-color: #f0fdfa;
+        }
+
+        .status-banner {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            text-align: center;
+            font-weight: 700;
+            background-color: #e2e8f0;
+            color: #475569;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .status-banner.success {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 2px solid #34d399;
+        }
+
+        .status-banner.error {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 2px solid #f87171;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        .btn {
+            appearance: none;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-hint { background-color: #fef3c7; color: #d97706; }
+        .btn-answer { background-color: #e0f2fe; color: #0284c7; }
+        .btn-reset { background-color: #f1f5f9; color: var(--text-sub); }
+
+        .panel {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-out, opacity 0.3s ease;
+            opacity: 0;
+            border-radius: 12px;
+            margin-top: 10px;
+        }
+
+        .panel.open {
+            max-height: 700px;
+            opacity: 1;
+            padding: 18px;
+            border: 1px solid var(--border);
+        }
+
+        .hint-panel { background-color: #fffbeb; border-color: #fcd34d; }
+        .answer-panel { background-color: #f0f9ff; border-color: #7dd3fc; }
+
+
+        .quiz-progress {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .progress-card {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px;
+            text-align: center;
+        }
+        .progress-label { font-size: 0.72rem; color: var(--text-sub); font-weight: 700; }
+        .progress-value { font-size: 1.15rem; font-weight: 900; color: var(--primary-hover); }
+        .btn-next { background-color: var(--primary); color: white; display: none; }
+        .btn-next.show { display: inline-block; }
+        .option-btn:disabled { cursor: default; opacity: 0.82; }
+        .option-btn.correct { border-color: #10b981; background: #ecfdf5; }
+        .option-btn.wrong { border-color: #ef4444; background: #fef2f2; }
+
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            .container { padding: 15px; }
+            .sensor-grid { grid-template-columns: repeat(2, 1fr); }
+            .actuator-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<canvas id="fx-canvas"></canvas>
+
+<div class="container">
+    <header>
+        <span class="badge">비브라스 챌린지 · 복합 제어 (Group 5)</span>
+        <h1>비버 스마트 팜의 복합 환경 제어 시스템</h1>
+    </header>
+
+    <section class="story-box">
+        <p>비버 스마트 팜 온실에는 4개의 센서 측정값에 따라 <strong>[천장 환기창]</strong>과 <strong>[대형 냉방 팬]</strong>이 자동으로 작동합니다.</p>
+        
+        <div class="rule-card">
+            <strong>⚙️ 복합 제어 규칙</strong><br>
+            • <strong>천장 환기창:</strong> <code>(온도 높음 OR 햇빛 강함)</code> <strong>AND</strong> <code>(비 안 옴)</code> <strong>AND</strong> <code>(바람 약함)</code> 시 <strong>[열림]</strong><br>
+            • <strong>대형 냉방 팬:</strong> <code>(온도 높음)</code> <strong>AND</strong> <code>(환기창이 닫혀 있거나 OR 햇빛 강함)</code> 시 <strong>[작동]</strong>
+        </div>
+    </section>
+
+    <!-- Interactive Simulator -->
+    <section class="sim-section">
+        <div class="sim-title">🎮 센서 시뮬레이터 (버튼을 눌러 동작을 실험해보세요)</div>
+        <div class="sensor-grid">
+            <button class="sensor-btn" id="btn-a" onclick="toggleSensor('A')">
+                <span class="sensor-icon">🌡️</span>
+                <span class="sensor-label">A: 온도</span>
+                <span class="sensor-state" id="state-a">OFF (적정)</span>
+            </button>
+            <button class="sensor-btn" id="btn-b" onclick="toggleSensor('B')">
+                <span class="sensor-icon">☀️</span>
+                <span class="sensor-label">B: 햇빛</span>
+                <span class="sensor-state" id="state-b">OFF (약함)</span>
+            </button>
+            <button class="sensor-btn" id="btn-c" onclick="toggleSensor('C')">
+                <span class="sensor-icon">🌧️</span>
+                <span class="sensor-label">C: 비</span>
+                <span class="sensor-state" id="state-c">OFF (안옴)</span>
+            </button>
+            <button class="sensor-btn" id="btn-d" onclick="toggleSensor('D')">
+                <span class="sensor-icon">💨</span>
+                <span class="sensor-label">D: 강풍</span>
+                <span class="sensor-state" id="state-d">OFF (약함)</span>
+            </button>
+        </div>
+
+        <div class="actuator-grid">
+            <div class="actuator-card inactive" id="window-card">🪟 환기창: 닫힘</div>
+            <div class="actuator-card inactive" id="fan-card">🌀 냉방 팬: 정지</div>
+        </div>
+    </section>
+
+    <!-- Problem Table & Quiz -->
+    <section>
+        <div class="quiz-progress">
+            <div class="progress-card"><div class="progress-label">현재 문제</div><div class="progress-value" id="round-text">1 / 5</div></div>
+            <div class="progress-card"><div class="progress-label">누적 점수</div><div class="progress-value" id="score-text">0점</div></div>
+            <div class="progress-card"><div class="progress-label">채점 방식</div><div class="progress-value">+1 / 0</div></div>
+        </div>
+
+        <h3 style="font-size: 1rem; margin-bottom: 10px;">📊 무작위 스마트 팜 센서 측정기록</h3>
+        <table class="data-table">
+            <thead>
+                <tr><th>구역</th><th>A (온도)</th><th>B (햇빛)</th><th>C (비)</th><th>D (강풍)</th></tr>
+            </thead>
+            <tbody id="quiz-table-body"></tbody>
+        </table>
+
+        <div style="font-weight: 800; font-size: 1.05rem; margin-bottom: 12px;" id="question-text">
+            ❓ Q. [천장 환기창]도 열리고, [대형 냉방 팬]도 동시에 작동하는 구역은 어디일까요?
+        </div>
+
+        <div class="options-grid" id="options-grid"></div>
+
+        <div class="status-banner" id="status-text">
+            👆 센서 기록을 분석하여 정답을 선택하세요. 총 5문제입니다!
+        </div>
+    </section>
+
+    <div class="controls">
+        <button class="btn btn-hint" onclick="togglePanel('hint')">💡 힌트 보기</button>
+        <button class="btn btn-answer" onclick="togglePanel('answer')">🔑 정답 및 상세 해설</button>
+        <button class="btn btn-next" id="next-btn" onclick="nextQuestion()">다음 문제 ➡️</button>
+        <button class="btn btn-reset" onclick="startQuiz()">🔄 처음부터</button>
+    </div>
+
+    <div id="hint-panel" class="panel hint-panel">
+        <h4 style="color: #b45309; margin-bottom: 8px;">🔍 힌트: 단계별 논리 분석</h4>
+        <ol style="margin-left: 20px; color: #78350f; font-size: 0.9rem;">
+            <li><strong>환기창:</strong> (A 또는 B)가 켜지고, C와 D는 모두 꺼져야 합니다.</li>
+            <li><strong>냉방 팬:</strong> A가 켜져야 하며, 환기창이 닫혔거나 B가 켜져야 합니다.</li>
+            <li>두 장치가 동시에 작동하는 구역을 한 곳씩 계산해 보세요.</li>
+        </ol>
+    </div>
+
+    <div id="answer-panel" class="panel answer-panel">
+        <h4 style="color: #0369a1; margin-bottom: 8px;" id="answer-title">🔑 정답 해설</h4>
+        <p style="font-size: 0.9rem; color: #0c4a6e; margin-bottom: 10px;" id="answer-detail">
+            먼저 답을 선택하면 현재 문제의 정답과 장치 상태가 표시됩니다.
+        </p>
+    </div>
+</div>
+
+<script>
+    // Canvas Animation Effects Engine
+    const canvas = document.getElementById('fx-canvas');
+    const ctx = canvas.getContext('2d');
+    let plusOnes = [], rainDrops = [], fireworks = [];
+
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function triggerWinEffect() {
+        const centerX = canvas.width / 2;
+        plusOnes.push({ x: centerX - 120, y: -60, vy: 7, size: 36 });
+        setTimeout(() => plusOnes.push({ x: centerX, y: -60, vy: 8, size: 42 }), 150);
+        setTimeout(() => plusOnes.push({ x: centerX + 120, y: -60, vy: 6.5, size: 36 }), 300);
+    }
+
+    function createFireworkBurst(x, y) {
+        const colors = ['#0d9488', '#3b82f6', '#f59e0b', '#ec4899', '#10b981'];
+        for (let i = 0; i < 25; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = Math.random() * 7 + 2;
+            fireworks.push({
+                x: x, y: y,
+                vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+                radius: Math.random() * 3 + 2, color: colors[Math.floor(Math.random() * colors.length)],
+                alpha: 1, decay: Math.random() * 0.02 + 0.015
+            });
+        }
+    }
+
+    function triggerLossEffect() {
+        // 화면 위쪽에서 시작 위치와 속도가 서로 다른 빗방울을 생성합니다.
+        for (let i = 0; i < 90; i++) {
+            rainDrops.push({
+                x: Math.random() * (canvas.width + 120) - 60,
+                y: -Math.random() * (canvas.height * 0.75) - 20,
+                vx: Math.random() * 1.4 - 0.9,
+                vy: Math.random() * 8 + 10,
+                length: Math.random() * 14 + 10,
+                width: Math.random() * 1.2 + 0.7,
+                alpha: Math.random() * 0.35 + 0.35
+            });
+        }
+    }
+
+    function animateEffects() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        for (let i = plusOnes.length - 1; i >= 0; i--) {
+            const p = plusOnes[i];
+            p.y += p.vy;
+            if (Math.random() < 0.35) createFireworkBurst(p.x + (Math.random() * 80 - 40), p.y);
+            ctx.save();
+            ctx.font = `bold ${p.size}pt Pretendard, sans-serif`;
+            ctx.fillStyle = '#10b981';
+            ctx.shadowColor = '#059669';
+            ctx.shadowBlur = 12;
+            ctx.fillText('+1', p.x, p.y);
+            ctx.restore();
+            if (p.y > canvas.height + 60) plusOnes.splice(i, 1);
+        }
+
+        for (let i = fireworks.length - 1; i >= 0; i--) {
+            const fw = fireworks[i];
+            fw.x += fw.vx; fw.y += fw.vy; fw.vy += 0.12; fw.alpha -= fw.decay;
+            if (fw.alpha <= 0) { fireworks.splice(i, 1); continue; }
+            ctx.save(); ctx.globalAlpha = fw.alpha; ctx.fillStyle = fw.color;
+            ctx.beginPath(); ctx.arc(fw.x, fw.y, fw.radius, 0, Math.PI * 2); ctx.fill();
+            ctx.restore();
+        }
+
+        for (let i = rainDrops.length - 1; i >= 0; i--) {
+            const drop = rainDrops[i];
+            drop.x += drop.vx;
+            drop.y += drop.vy;
+
+            ctx.save();
+            ctx.globalAlpha = drop.alpha;
+            ctx.strokeStyle = '#60a5fa';
+            ctx.lineWidth = drop.width;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(drop.x, drop.y);
+            ctx.lineTo(drop.x - drop.vx * 1.8, drop.y - drop.length);
+            ctx.stroke();
+            ctx.restore();
+
+            if (drop.y > canvas.height + drop.length || drop.x < -100 || drop.x > canvas.width + 100) {
+                rainDrops.splice(i, 1);
+            }
+        }
+
+        requestAnimationFrame(animateEffects);
+    }
+    requestAnimationFrame(animateEffects);
+
+    // Smart Farm Simulator Logic
+    let sensors = { A: false, B: false, C: false, D: false };
+    const TOTAL_ROUNDS = 5;
+    const zoneNames = ['A구역', 'B구역', 'C구역', 'D구역'];
+    let currentRound = 1;
+    let score = 0;
+    let answered = false;
+    let currentRows = [];
+    let correctIndex = -1;
+
+    function toggleSensor(key) {
+        sensors[key] = !sensors[key];
+        updateUI();
+    }
+
+    function setSensors(a, b, c, d) {
+        sensors = { A: a, B: b, C: c, D: d };
+        updateUI();
+    }
+
+    function evaluate(row) {
+        const windowOpen = (row.A || row.B) && !row.C && !row.D;
+        const fanActive = row.A && (!windowOpen || row.B);
+        return { windowOpen, fanActive, both: windowOpen && fanActive };
+    }
+
+    function updateUI() {
+        ['A', 'B', 'C', 'D'].forEach(key => {
+            const btn = document.getElementById(`btn-${key.toLowerCase()}`);
+            btn.classList.toggle('active', sensors[key]);
+        });
+
+        document.getElementById('state-a').innerText = sensors.A ? 'ON (높음)' : 'OFF (적정)';
+        document.getElementById('state-b').innerText = sensors.B ? 'ON (강함)' : 'OFF (약함)';
+        document.getElementById('state-c').innerText = sensors.C ? 'ON (비옴)' : 'OFF (안옴)';
+        document.getElementById('state-d').innerText = sensors.D ? 'ON (강함)' : 'OFF (약함)';
+
+        const { windowOpen, fanActive } = evaluate(sensors);
+        const windowCard = document.getElementById('window-card');
+        windowCard.className = `actuator-card ${windowOpen ? 'active' : 'inactive'}`;
+        windowCard.innerHTML = windowOpen ? '🪟 환기창: 열림 (Open)' : '🪟 환기창: 닫힘 (Closed)';
+
+        const fanCard = document.getElementById('fan-card');
+        fanCard.className = `actuator-card ${fanActive ? 'active' : 'inactive'}`;
+        fanCard.innerHTML = fanActive ? '🌀 냉방 팬: 작동 (Active)' : '🌀 냉방 팬: 정지 (Off)';
+        return { windowOpen, fanActive };
+    }
+
+    function randomBool() { return Math.random() < 0.5; }
+
+    function makeQuestion() {
+        // 정답이 정확히 하나인 표가 나올 때까지 새 상황을 생성합니다.
+        let rows, answers;
+        do {
+            rows = zoneNames.map(() => ({ A: randomBool(), B: randomBool(), C: randomBool(), D: randomBool() }));
+            answers = rows.map(evaluate).map(x => x.both);
+        } while (answers.filter(Boolean).length !== 1);
+        currentRows = rows;
+        correctIndex = answers.indexOf(true);
+    }
+
+    function stateText(key, value) {
+        const labels = {
+            A: value ? '높음 (ON)' : '적정 (OFF)',
+            B: value ? '강함 (ON)' : '약함 (OFF)',
+            C: value ? '비 옴 (ON)' : '안 옴 (OFF)',
+            D: value ? '강함 (ON)' : '약함 (OFF)'
+        };
+        return labels[key];
+    }
+
+    function renderQuestion() {
+        answered = false;
+        makeQuestion();
+        document.getElementById('round-text').innerText = `${currentRound} / ${TOTAL_ROUNDS}`;
+        document.getElementById('score-text').innerText = `${score}점`;
+        document.getElementById('next-btn').classList.remove('show');
+        document.getElementById('hint-panel').classList.remove('open');
+        document.getElementById('answer-panel').classList.remove('open');
+        document.getElementById('answer-title').innerText = '🔑 정답 해설';
+        document.getElementById('answer-detail').innerText = '먼저 답을 선택하면 현재 문제의 정답과 장치 상태가 표시됩니다.';
+
+        const body = document.getElementById('quiz-table-body');
+        body.innerHTML = currentRows.map((r, i) => `
+            <tr>
+                <td>${zoneNames[i]}</td><td>${stateText('A', r.A)}</td><td>${stateText('B', r.B)}</td>
+                <td>${stateText('C', r.C)}</td><td>${stateText('D', r.D)}</td>
+            </tr>`).join('');
+
+        document.getElementById('options-grid').innerHTML = zoneNames.map((name, i) =>
+            `<button class="option-btn" data-index="${i}" onclick="checkAnswer(${i})">${i + 1}번 ${name}</button>`
+        ).join('');
+
+        const status = document.getElementById('status-text');
+        status.className = 'status-banner';
+        status.innerHTML = '👆 센서 기록을 분석하여 정답을 선택하세요.';
+        setSensors(false, false, false, false);
+    }
+
+    function checkAnswer(index) {
+        if (answered) return;
+        answered = true;
+        const buttons = [...document.querySelectorAll('.option-btn')];
+        buttons.forEach(b => b.disabled = true);
+        buttons[correctIndex].classList.add('correct');
+
+        const selected = currentRows[index];
+        setSensors(selected.A, selected.B, selected.C, selected.D);
+        const result = evaluate(selected);
+        const status = document.getElementById('status-text');
+
+        if (index === correctIndex) {
+            score += 1;
+            status.className = 'status-banner success';
+            status.innerHTML = `🎉 정답입니다! +1점 (현재 점수: ${score}점)`;
+            triggerWinEffect();
+        } else {
+            // no penalty
+            
+            buttons[index].classList.add('wrong');
+            status.className = 'status-banner error';
+            status.innerHTML = `❌ 오답입니다! 0점 (현재 점수: ${score}점)`;
+            triggerLossEffect();
+        }
+        document.getElementById('score-text').innerText = `${score}점`;
+        showExplanation(index, result);
+        document.getElementById('next-btn').classList.add('show');
+        document.getElementById('next-btn').innerText = currentRound === TOTAL_ROUNDS ? '최종 결과 보기 🏁' : '다음 문제 ➡️';
+    }
+
+    function showExplanation(selectedIndex, selectedResult) {
+        const correctRow = currentRows[correctIndex];
+        const correctResult = evaluate(correctRow);
+        document.getElementById('answer-title').innerText = `🎯 정답: ${correctIndex + 1}번 ${zoneNames[correctIndex]}`;
+        document.getElementById('answer-detail').innerHTML = `
+            <strong>[정답 구역 분석]</strong><br>
+            • 환기창: (A OR B) AND NOT C AND NOT D = <strong>${correctResult.windowOpen ? '열림' : '닫힘'}</strong><br>
+            • 냉방 팬: A AND (환기창 닫힘 OR B) = <strong>${correctResult.fanActive ? '작동' : '정지'}</strong><br>
+            따라서 두 장치가 모두 작동하는 곳은 <strong>${zoneNames[correctIndex]}</strong>입니다.<br><br>
+            선택한 ${zoneNames[selectedIndex]}의 상태: 환기창 ${selectedResult.windowOpen ? '열림' : '닫힘'}, 팬 ${selectedResult.fanActive ? '작동' : '정지'}
+        `;
+        document.getElementById('answer-panel').classList.add('open');
+    }
+
+    function nextQuestion() {
+        if (!answered) return;
+        if (currentRound < TOTAL_ROUNDS) {
+            currentRound += 1;
+            renderQuestion();
+        } else {
+            showFinalResult();
+        }
+    }
+
+    function showFinalResult() {
+        const maxScore = TOTAL_ROUNDS;
+        let message = score === 5 ? '완벽합니다! 복합 제어 규칙을 정확히 이해했습니다.'
+                    : score >= 3 ? '훌륭합니다! 규칙을 대부분 정확히 적용했습니다.'
+                    : score >= 1 ? '좋습니다. 힌트를 활용해 조건의 순서를 다시 확인해 보세요.'
+                    : '조건식을 한 단계씩 나누어 다시 도전해 보세요.';
+        document.getElementById('status-text').className = score >= 1 ? 'status-banner success' : 'status-banner error';
+        document.getElementById('status-text').innerHTML = `🏁 5문제 완료! 최종 점수는 <strong>${score}점 / ${maxScore}점</strong>입니다.<br>${message}`;
+        document.getElementById('next-btn').classList.remove('show');
+        document.getElementById('options-grid').innerHTML = '<button class="option-btn" onclick="startQuiz()" style="text-align:center;">🔄 다시 5문제 풀기</button>';
+    }
+
+    function togglePanel(type) {
+        document.getElementById(`${type}-panel`).classList.toggle('open');
+    }
+
+    function startQuiz() {
+        currentRound = 1;
+        score = 0;
+        renderQuestion();
+    }
+
+    window.onload = startQuiz;
+</script>
+</body>
+</html>

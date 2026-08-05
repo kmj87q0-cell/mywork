@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>비버 스마트 팜 제어 시스템 🦫</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Pretendard', 'Noto Sans KR', sans-serif; }
+        body { background-color: #f0f7f4; color: #333; margin: 0; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; background: #ffffff; border-radius: 16px; padding: 25px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+        
+        h1 { text-align: center; color: #1b5e20; margin-bottom: 5px; }
+        .subtitle { text-align: center; color: #555; margin-bottom: 25px; }
+
+        .card { background: #fafafa; border: 1px solid #e0e0e0; border-radius: 12px; padding: 18px; margin-bottom: 20px; }
+        .card-title { font-size: 1.15em; font-weight: bold; color: #2e7d32; margin-bottom: 12px; }
+
+        /* 규칙 박스 */
+        .rules-bg { background-color: #e8f5e9; border: 1px solid #a5d6a7; border-radius: 8px; padding: 12px 18px; }
+        .rules-bg ul { margin: 0; padding-left: 20px; line-height: 1.8; }
+
+        /* 그리드 레이아웃 */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 650px) { .grid-2 { grid-template-columns: 1fr; } }
+
+        /* 슬라이더 컨트롤 */
+        .control-group { margin-bottom: 15px; }
+        .control-label { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 5px; }
+        input[type=range] { width: 100%; cursor: pointer; }
+
+        /* 장치 상태 카드 */
+        .device-status { display: flex; gap: 10px; }
+        .device-card { flex: 1; text-align: center; padding: 15px; border-radius: 10px; border: 2px solid #ddd; background: #fff; }
+        .device-card.on { border-color: #2e7d32; background: #e8f5e9; }
+        .device-card .icon { font-size: 2em; }
+        .device-card .name { font-weight: bold; margin: 5px 0; color: #555; }
+        .device-card .state { font-size: 1.5em; font-weight: bold; color: #999; }
+        .device-card.on .state { color: #2e7d32; }
+
+        /* 문제 표 */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; }
+        th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: center; font-size: 0.95em; }
+        th { background-color: #2e7d32; color: white; }
+        .tag-on { color: #2e7d32; font-weight: bold; }
+        .tag-off { color: #888; }
+
+        /* 제출 영역 */
+        .radio-group { display: flex; gap: 15px; justify-content: center; margin: 15px 0; font-weight: bold; }
+        .btn-group { text-align: center; margin-top: 15px; }
+        .btn { background: #00897b; color: white; border: none; padding: 10px 24px; font-size: 16px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .btn:hover { background: #00695c; }
+        .btn-reset { background: #757575; margin-left: 10px; }
+
+        /* 피드백 박스 */
+        #feedback { margin-top: 15px; padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; font-size: 1.1em; display: none; }
+        .correct { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .wrong { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🦫 비버 스마트 팜 제어 시스템</h1>
+    <div class="subtitle">한눈에 보는 복합 환경 제어 시뮬레이터</div>
+
+    <!-- 1 & 2. 목표 및 제어 규칙 -->
+    <div class="card">
+        <div class="card-title">📌 제어 규칙 (문제 조건)</div>
+        <div class="rules-bg">
+            <ul>
+                <li>💧 <b>토양 습도 &lt; 40%</b> → 급수기 <span class="tag-on">ON</span></li>
+                <li>🌡️ <b>온도 &gt; 30°C</b> → 환풍기 <span class="tag-on">ON</span></li>
+                <li>💡 <b>조도 &lt; 300 lux</b> → 보조 LED <span style="color:orange; font-weight:bold;">ON</span> (표시만)</li>
+                <li>※ 두 규칙이 모두 참이면 두 장치 모두 <span class="tag-on">ON</span></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 3. 실시간 시뮬레이터 -->
+    <div class="card">
+        <div class="card-title">🎮 1. 센서 조작 및 장치 상태 확인</div>
+        <div class="grid-2">
+            <!-- 입력 조작 -->
+            <div>
+                <div class="control-group">
+                    <div class="control-label"><span>💧 토양 습도</span><span id="val-soil">35%</span></div>
+                    <input type="range" id="input-soil" min="0" max="100" value="35" oninput="updateSystem()">
+                </div>
+                <div class="control-group">
+                    <div class="control-label"><span>🌡️ 온도</span><span id="val-temp">32°C</span></div>
+                    <input type="range" id="input-temp" min="0" max="50" value="32" oninput="updateSystem()">
+                </div>
+                <div class="control-group">
+                    <div class="control-label"><span>💡 조도</span><span id="val-light">250 lux</span></div>
+                    <input type="range" id="input-light" min="0" max="1000" step="10" value="250" oninput="updateSystem()">
+                </div>
+            </div>
+
+            <!-- 자동 계산 결과 -->
+            <div class="device-status">
+                <div class="device-card" id="card-water">
+                    <div class="icon">💧</div>
+                    <div class="name">급수기</div>
+                    <div class="state" id="state-water">OFF</div>
+                </div>
+                <div class="device-card" id="card-fan">
+                    <div class="icon">🌀</div>
+                    <div class="name">환풍기</div>
+                    <div class="state" id="state-fan">OFF</div>
+                </div>
+                <div class="device-card" id="card-led">
+                    <div class="icon">💡</div>
+                    <div class="name">보조 LED</div>
+                    <div class="state" id="state-led">OFF</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. 문제 풀기 -->
+    <div class="card">
+        <div class="card-title">🧠 2. 문제 풀기</div>
+        <p>현재 설정한 센서값에 의해 작동하는 장치 상태와 **동일한 동작을 하는 상황 번호**를 선택하세요.</p>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>상황</th>
+                    <th>토양 습도 (%)</th>
+                    <th>온도 (°C)</th>
+                    <th>조도 (lux)</th>
+                    <th>급수기</th>
+                    <th>환풍기</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>①</td><td>25</td><td>25</td><td>500</td><td class="tag-on">ON</td><td class="tag-off">OFF</td></tr>
+                <tr><td>②</td><td>55</td><td>35</td><td>600</td><td class="tag-off">OFF</td><td class="tag-on">ON</td></tr>
+                <tr><td>③</td><td>30</td><td>28</td><td>200</td><td class="tag-on">ON</td><td class="tag-off">OFF</td></tr>
+                <tr><td>④</td><td>45</td><td>32</td><td>250</td><td class="tag-off">OFF</td><td class="tag-on">ON</td></tr>
+                <tr><td>⑤</td><td>35</td><td>31</td><td>280</td><td class="tag-on">ON</td><td class="tag-on">ON</td></tr>
+            </tbody>
+        </table>
+
+        <div class="radio-group">
+            <label><input type="radio" name="answer" value="1"> ①번</label>
+            <label><input type="radio" name="answer" value="2"> ②번</label>
+            <label><input type="radio" name="answer" value="3"> ③번</label>
+            <label><input type="radio" name="answer" value="4"> ④번</label>
+            <label><input type="radio" name="answer" value="5" checked> ⑤번</label>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn" onclick="checkAnswer()">제출하기</button>
+            <button class="btn btn-reset" onclick="resetForm()">다시하기</button>
+        </div>
+
+        <div id="feedback"></div>
+    </div>
+</div>
+
+<script>
+    // 각 상황별 정답 (급수기, 환풍기)
+    const answers = {
+        1: { water: true, fan: false },
+        2: { water: false, fan: true },
+        3: { water: true, fan: false },
+        4: { water: false, fan: true },
+        5: { water: true, fan: true }
+    };
+
+    function updateSystem() {
+        // 값 읽기
+        const soil = parseInt(document.getElementById('input-soil').value);
+        const temp = parseInt(document.getElementById('input-temp').value);
+        const light = parseInt(document.getElementById('input-light').value);
+
+        // 화면 수치 업데이트
+        document.getElementById('val-soil').innerText = soil + '%';
+        document.getElementById('val-temp').innerText = temp + '°C';
+        document.getElementById('val-light').innerText = light + ' lux';
+
+        // 제어 로직 계산
+        const isWaterOn = soil < 40;
+        const isFanOn = temp > 30;
+        const isLedOn = light < 300;
+
+        // UI 반영
+        setDeviceState('card-water', 'state-water', isWaterOn);
+        setDeviceState('card-fan', 'state-fan', isFanOn);
+        setDeviceState('card-led', 'state-led', isLedOn);
+    }
+
+    function setDeviceState(cardId, stateId, isOn) {
+        const card = document.getElementById(cardId);
+        const stateText = document.getElementById(stateId);
+        if (isOn) {
+            card.classList.add('on');
+            stateText.innerText = 'ON';
+        } else {
+            card.classList.remove('on');
+            stateText.innerText = 'OFF';
+        }
+    }
+
+    function checkAnswer() {
+        const selected = document.querySelector('input[name="answer"]:checked');
+        if (!selected) return;
+
+        const choice = parseInt(selected.value);
+        const soil = parseInt(document.getElementById('input-soil').value);
+        const temp = parseInt(document.getElementById('input-temp').value);
+
+        const currentWater = soil < 40;
+        const currentFan = temp > 30;
+
+        const target = answers[choice];
+        const feedback = document.getElementById('feedback');
+
+        if (currentWater === target.water && currentFan === target.fan) {
+            feedback.className = 'correct';
+            feedback.innerHTML = '🎉 <b>정답입니다!</b> 센서 상태와 선택한 상황의 동작 규칙이 완벽히 일치합니다.';
+        } else {
+            feedback.className = 'wrong';
+            feedback.innerHTML = '🚨 <b>틀렸습니다!</b> 현재 슬라이더의 급수기/환풍기 상태와 선택한 상황 표를 다시 비교해 보세요.';
+        }
+        feedback.style.display = 'block';
+    }
+
+    function resetForm() {
+        document.getElementById('input-soil').value = 35;
+        document.getElementById('input-temp').value = 32;
+        document.getElementById('input-light').value = 250;
+        document.getElementById('feedback').style.display = 'none';
+        updateSystem();
+    }
+
+    // 초기 실행
+    updateSystem();
+</script>
+
+</body>
+</html>

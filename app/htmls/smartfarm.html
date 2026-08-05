@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>비버 스마트 팜 제어 시스템 🦫</title>
+    <style>
+        body { font-family: 'Malgun Gothic', sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 20px; }
+        .lang-select { padding: 8px 12px; border-radius: 6px; border: 1px solid #ccc; font-size: 1em; }
+        .glossary { background: #fafafa; padding: 12px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px; }
+        .rule-box { background-color: #f0f7ff; padding: 15px 20px; border-radius: 10px; border: 2px solid #1890ff; margin-bottom: 20px; }
+        .rule-box ul { margin: 5px 0; padding-left: 20px; font-size: 1.1em; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        @media (max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } }
+        .slider-group { margin-bottom: 15px; }
+        .slider-group label { display: block; font-weight: bold; margin-bottom: 5px; }
+        .slider-group input { width: 100%; cursor: pointer; }
+        .status-card { background: #ffffff; padding: 15px; border-radius: 10px; text-align: center; border: 2px solid #757575; margin-bottom: 10px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1); }
+        .status-title { font-size: 1.2em; font-weight: bold; }
+        .status-value { font-size: 1.8em; font-weight: bold; margin-top: 5px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        th { background-color: #f2f2f2; }
+        .radio-group { margin: 15px 0; display: flex; gap: 15px; flex-wrap: wrap; }
+        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 1em; font-weight: bold; }
+        .btn-primary { background-color: #1976d2; color: white; }
+        .btn-secondary { background-color: #757575; color: white; margin-top: 10px; }
+        .feedback { margin-top: 15px; padding: 12px; border-radius: 6px; font-weight: bold; display: none; }
+        .feedback.success { background-color: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; display: block; }
+        .feedback.error { background-color: #ffebee; color: #c62828; border: 1px solid #ef9a9a; display: block; }
+        .score-box { background: #f5f5f5; padding: 15px; border-radius: 8px; text-align: center; }
+        .score-value { font-size: 2em; font-weight: bold; color: #1976d2; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- 언어 선택 및 상단 헤더 -->
+    <div class="header">
+        <div>
+            <h1 id="app-title">🦫 비버 스마트 팜 제어 시스템</h1>
+        </div>
+        <div>
+            <label for="lang" style="font-weight: bold;">🌐 언어 선택: </label>
+            <select id="lang" class="lang-select" onchange="changeLanguage()">
+                <option value="한국어">한국어</option>
+                <option value="English">English</option>
+                <option value="Tiếng Việt">Tiếng Việt</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- 용어 사전 -->
+    <details class="glossary">
+        <summary style="font-weight: bold; cursor: pointer;">📖 용어 사전 (Glossary)</summary>
+        <p style="margin: 5px 0 0 0;">
+            • <b>💧 토양 습도:</b> 흙 속에 물이 얼마나 있는지 나타냅니다.<br>
+            • <b>🌡 온도:</b> 공기가 얼마나 따뜻한지 나타냅니다.<br>
+            • <b>💡 조도 (lux):</b> 빛이 얼마나 밝은지 나타내는 단위입니다.
+        </p>
+    </details>
+
+    <!-- 목표 및 규칙 -->
+    <h3 id="goal-title">1. 목표 🎯</h3>
+    <p id="goal-desc">센서 데이터를 보고 두 가지 장치를 어떻게 켜고 끌지 맞히는 문제!</p>
+
+    <h3 id="rule-title">2. 제어 규칙 (문제 조건) 📝</h3>
+    <div class="rule-box">
+        <ul>
+            <li id="rule-moisture">💧 토양 습도 &lt; 40% → 급수기 ON</li>
+            <li id="rule-temp">🌀 온도 &gt; 30°C → 환풍기 ON</li>
+            <li id="rule-light">💡 조도 &lt; 300 lux → 보조 LED ON</li>
+        </ul>
+        <p id="rule-note" style="color: #555; margin-top: 10px; margin-bottom: 0;">※ 조건이 맞으면 각 장치가 자동으로 작동합니다.</p>
+    </div>
+
+    <!-- 센서 제어 및 표시 -->
+    <h3 id="control-title">3. 화면 구성 및 동작 🖥</h3>
+    <div class="grid-2">
+        <div>
+            <h4 id="sensor-input-title">1. 센서 상태를 선택하세요</h4>
+            
+            <div class="slider-group">
+                <label id="lbl-moisture">💧 토양 습도: <span id="val-moisture">35</span>%</label>
+                <input type="range" id="slider-moisture" min="0" max="100" value="35" oninput="updateSystem()">
+            </div>
+
+            <div class="slider-group">
+                <label id="lbl-temp">🌡 온도: <span id="val-temp">32</span>°C</label>
+                <input type="range" id="slider-temp" min="0" max="50" value="32" oninput="updateSystem()">
+            </div>
+
+            <div class="slider-group">
+                <label id="lbl-light">💡 조도: <span id="val-light">250</span> lux</label>
+                <input type="range" id="slider-light" min="0" max="1000" step="10" value="250" oninput="updateSystem()">
+            </div>
+        </div>
+
+        <div>
+            <h4 id="device-status-title">2. 장치 상태 (자동 계산 결과)</h4>
+            
+            <div class="status-card" id="card-waterer">
+                <div class="status-title" id="title-waterer">💧 급수기 (Water)</div>
+                <div class="status-value" id="status-waterer">ON 🟢</div>
+            </div>
+
+            <div class="status-card" id="card-fan">
+                <div class="status-title" id="title-fan">🌀 환풍기 (Fan)</div>
+                <div class="status-value" id="status-fan">ON 🟢</div>
+            </div>
+
+            <div class="status-card" id="card-led">
+                <div class="status-title" id="title-led">💡 보조 LED</div>
+                <div class="status-value" id="status-led">ON 🟢</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 문제 풀기 구역 -->
+    <h3 id="quiz-title">4. 문제 풀기 (교육 활동) 🧠</h3>
+    <p id="quiz-desc">아래 표의 상황일 때, 두 장치의 올바른 동작을 선택하세요.</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th id="th-sit">상황</th>
+                <th id="th-moisture">토양 습도 (%)</th>
+                <th id="th-temp">온도 (°C)</th>
+                <th id="th-light">조도 (lux)</th>
+                <th id="th-ans-waterer">급수기 정답</th>
+                <th id="th-ans-fan">환풍기 정답</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>1</td><td>25</td><td>25</td><td>500</td><td>ON</td><td>OFF</td></tr>
+            <tr><td>2</td><td>55</td><td>35</td><td>600</td><td>OFF</td><td>ON</td></tr>
+            <tr><td>3</td><td>30</td><td>28</td><td>200</td><td>ON</td><td>OFF</td></tr>
+            <tr><td>4</td><td>45</td><td>32</td><td>250</td><td>OFF</td><td>ON</td></tr>
+            <tr><td>5</td><td>35</td><td>31</td><td>280</td><td>ON</td><td>ON</td></tr>
+        </tbody>
+    </table>
+
+    <div class="grid-2">
+        <div>
+            <label id="select-label" style="font-weight: bold;">자신의 현재 계산 결과와 일치하는 상황 번호를 선택하세요:</label>
+            <div class="radio-group">
+                <label><input type="radio" name="situation" value="1" checked> 1</label>
+                <label><input type="radio" name="situation" value="2"> 2</label>
+                <label><input type="radio" name="situation" value="3"> 3</label>
+                <label><input type="radio" name="situation" value="4"> 4</label>
+                <label><input type="radio" name="situation" value="5"> 5</label>
+            </div>
+            <button class="btn btn-primary" id="btn-submit" onclick="submitAnswer()">제출하기</button>
+            <div id="feedback" class="feedback"></div>
+        </div>
+
+        <div class="score-box">
+            <h4 id="score-label" style="margin: 0 0 10px 0;">🏆 현재 점수</h4>
+            <div class="score-value" id="score-val">0</div>
+            <button class="btn btn-secondary" id="btn-reset" onclick="resetScore()">다시하기 (점수 초기화)</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 언어 번역 사전
+    const TRANSLATIONS = {
+        "한국어": {
+            title: "🦫 비버 스마트 팜의 복합 환경 제어 시스템",
+            goal_title: "1. 목표 🎯",
+            goal_desc: "센서 데이터를 보고 두 가지 장치(💧 급수기, 🌀 환풍기)를 어떻게 켜고 끌지 맞히는 문제!",
+            rule_title: "2. 제어 규칙 (문제 조건) 📝",
+            rule_moisture: "💧 토양 습도 < 40% → 급수기 ON (물을 줍니다)",
+            rule_temp: "🌀 온도 > 30°C → 환풍기 ON (바람을 쨉니다)",
+            rule_light: "💡 조도 < 300 lux → 보조 LED ON (빛을 쨉니다)",
+            rule_note: "※ 조건이 맞으면 각 장치가 자동으로 작동합니다.",
+            control_title: "3. 화면 구성 및 동작 🖥",
+            sensor_input: "1. 센서 상태를 선택하세요 (슬라이더 조작)",
+            soil_moisture: "💧 토양 습도",
+            temp: "🌡 온도",
+            light: "💡 조도",
+            device_status: "2. 장치 상태 (자동 계산 결과)",
+            waterer: "급수기 (Water)",
+            fan: "환풍기 (Fan)",
+            led: "보조 LED",
+            quiz_title: "4. 문제 풀기 (교육 활동) 🧠",
+            quiz_desc: "아래 표의 상황일 때, 두 장치의 올바른 동작을 선택하세요.",
+            select_label: "자신의 현재 계산 결과와 일치하는 상황 번호를 선택하세요:",
+            submit_btn: "제출하기",
+            reset_btn: "다시하기 (점수 초기화)",
+            correct_msg: "🎉 정답입니다! 완벽하게 분석하셨군요!",
+            wrong_msg: "😢 틀렸습니다. 다시 한번 규칙과 표를 비교해 보세요.",
+            score_label: "🏆 현재 점수",
+            situation: "상황",
+            ans_waterer: "급수기 정답",
+            ans_fan: "환풍기 정답"
+        },
+        "English": {
+            title: "🦫 Beaver Smart Farm Control System",
+            goal_title: "1. Goal 🎯",
+            goal_desc: "Look at the sensor data and guess how to turn devices ON or OFF!",
+            rule_title: "2. Control Rules 📝",
+            rule_moisture: "💧 Soil Moisture < 40% → Waterer ON",
+            rule_temp: "🌀 Temperature > 30°C → Fan ON",
+            rule_light: "💡 Light < 300 lux → Auxiliary LED ON",
+            rule_note: "※ If conditions are met, devices turn ON automatically.",
+            control_title: "3. Controls & Display 🖥",
+            sensor_input: "1. Select Sensor Status (Use Sliders)",
+            soil_moisture: "💧 Soil Moisture",
+            temp: "🌡 Temperature",
+            light: "💡 Light Intensity",
+            device_status: "2. Device Status (Auto Calculated)",
+            waterer: "Waterer",
+            fan: "Fan",
+            led: "Aux LED",
+            quiz_title: "4. Solve Problems 🧠",
+            quiz_desc: "Select the correct operation for the devices in the table scenarios below.",
+            select_label: "Choose the scenario number that matches your calculation:",
+            submit_btn: "Submit",
+            reset_btn: "Reset Score",
+            correct_msg: "🎉 Correct! Great job analyzing the rules!",
+            wrong_msg: "😢 Incorrect. Please check the rules and table again.",
+            score_label: "🏆 Current Score",
+            situation: "Scenario",
+            ans_waterer: "Waterer Ans",
+            ans_fan: "Fan Ans"
+        },
+        "Tiếng Việt": {
+            title: "🦫 Hệ thống điều khiển nông trại thông minh Beaver",
+            goal_title: "1. Mục tiêu 🎯",
+            goal_desc: "Dựa vào dữ liệu cảm biến, hãy đoán cách BẬT/TẮT thiết bị!",
+            rule_title: "2. Quy tắc điều khiển 📝",
+            rule_moisture: "💧 Độ ẩm đất < 40% → Máy tưới BẬT (ON)",
+            rule_temp: "🌀 Nhiệt độ > 30°C → Quạt BẬT (ON)",
+            rule_light: "💡 Ánh sáng < 300 lux → Đèn LED BẬT (ON)",
+            rule_note: "※ Nếu thỏa mãn điều kiện, thiết bị sẽ tự động BẬT.",
+            control_title: "3. Bảng điều khiển 🖥",
+            sensor_input: "1. Chọn trạng thái cảm biến",
+            soil_moisture: "💧 Độ ẩm đất",
+            temp: "🌡 Nhiệt độ",
+            light: "💡 Cường độ ánh sáng",
+            device_status: "2. Trạng thái thiết bị (Tự động)",
+            waterer: "Máy tưới nước",
+            fan: "Quạt thông gió",
+            led: "Đèn LED phụ",
+            quiz_title: "4. Giải bài tập 🧠",
+            quiz_desc: "Chọn hoạt động đúng của thiết bị theo tình huống trong bảng.",
+            select_label: "Chọn số tình huống phù hợp với kết quả tính toán của bạn:",
+            submit_btn: "Nộp bài",
+            reset_btn: "Đặt lại điểm",
+            correct_msg: "🎉 Chính xác! Bạn phân tích rất tốt!",
+            wrong_msg: "😢 Sai rồi. Hãy kiểm tra lại quy tắc và bảng nhé.",
+            score_label: "🏆 Điểm hiện tại",
+            situation: "Tình huống",
+            ans_waterer: "Đáp án Máy tưới",
+            ans_fan: "Đáp án Quạt"
+        }
+    };
+
+    const QUIZ_DATA = {
+        1: { waterer: "ON", fan: "OFF" },
+        2: { waterer: "OFF", fan: "ON" },
+        3: { waterer: "ON", fan: "OFF" },
+        4: { waterer: "OFF", fan: "ON" },
+        5: { waterer: "ON", fan: "ON" }
+    };
+
+    let score = 0;
+    let hasSubmitted = false;
+
+    // 시스템 상태 업데이트 (슬라이더 조작 시 실행)
+    function updateSystem() {
+        const moisture = parseInt(document.getElementById('slider-moisture').value);
+        const temp = parseInt(document.getElementById('slider-temp').value);
+        const light = parseInt(document.getElementById('slider-light').value);
+
+        document.getElementById('val-moisture').innerText = moisture;
+        document.getElementById('val-temp').innerText = temp;
+        document.getElementById('val-light').innerText = light;
+
+        // 로직 평가
+        const isWatererOn = moisture < 40;
+        const isFanOn = temp > 30;
+        const isLedOn = light < 300;
+
+        updateCard('card-waterer', 'status-waterer', isWatererOn, "#2e7d32");
+        updateCard('card-fan', 'status-fan', isFanOn, "#2e7d32");
+        updateCard('card-led', 'status-led', isLedOn, "#ed6c02");
+    }
+
+    function updateCard(cardId, statusId, isOn, activeColor) {
+        const card = document.getElementById(cardId);
+        const status = document.getElementById(statusId);
+        const color = isOn ? activeColor : "#757575";
+
+        card.style.borderColor = color;
+        status.style.color = color;
+        status.innerText = isOn ? "ON 🟢" : "OFF 🔴";
+    }
+
+    // 언어 변경 함수
+    function changeLanguage() {
+        const lang = document.getElementById('lang').value;
+        const t = TRANSLATIONS[lang];
+
+        document.getElementById('app-title').innerText = t.title;
+        document.getElementById('goal-title').innerText = t.goal_title;
+        document.getElementById('goal-desc').innerText = t.goal_desc;
+        document.getElementById('rule-title').innerText = t.rule_title;
+        document.getElementById('rule-moisture').innerText = t.rule_moisture;
+        document.getElementById('rule-temp').innerText = t.rule_temp;
+        document.getElementById('rule-light').innerText = t.rule_light;
+        document.getElementById('rule-note').innerText = t.rule_note;
+        document.getElementById('control-title').innerText = t.control_title;
+        document.getElementById('sensor-input-title').innerText = t.sensor_input;
+        document.getElementById('device-status-title').innerText = t.device_status;
+        document.getElementById('title-waterer').innerText = t.waterer;
+        document.getElementById('title-fan').innerText = t.fan;
+        document.getElementById('title-led').innerText = t.led;
+        document.getElementById('quiz-title').innerText = t.quiz_title;
+        document.getElementById('quiz-desc').innerText = t.quiz_desc;
+        document.getElementById('select-label').innerText = t.select_label;
+        document.getElementById('btn-submit').innerText = t.submit_btn;
+        document.getElementById('btn-reset').innerText = t.reset_btn;
+        document.getElementById('score-label').innerText = t.score_label;
+
+        // 표 헤더 변경
+        document.getElementById('th-sit').innerText = t.situation;
+        document.getElementById('th-moisture').innerText = t.soil_moisture + " (%)";
+        document.getElementById('th-temp').innerText = t.temp + " (°C)";
+        document.getElementById('th-light').innerText = t.light + " (lux)";
+        document.getElementById('th-ans-waterer').innerText = t.ans_waterer;
+        document.getElementById('th-ans-fan').innerText = t.ans_fan;
+    }
+
+    // 퀴즈 제출
+    function submitAnswer() {
+        const lang = document.getElementById('lang').value;
+        const t = TRANSLATIONS[lang];
+        const selectedSit = document.querySelector('input[name="situation"]:checked').value;
+
+        const moisture = parseInt(document.getElementById('slider-moisture').value);
+        const temp = parseInt(document.getElementById('slider-temp').value);
+
+        const currentWaterer = moisture < 40 ? "ON" : "OFF";
+        const currentFan = temp > 30 ? "ON" : "OFF";
+
+        const correctData = QUIZ_DATA[selectedSit];
+        const feedback = document.getElementById('feedback');
+
+        if (currentWaterer === correctData.waterer && currentFan === correctData.fan) {
+            feedback.className = "feedback success";
+            feedback.innerText = t.correct_msg;
+            if (!hasSubmitted) {
+                score += 1;
+                document.getElementById('score-val').innerText = score;
+                hasSubmitted = true;
+            }
+        } else {
+            feedback.className = "feedback error";
+            feedback.innerText = t.wrong_msg;
+            if (!hasSubmitted) {
+                hasSubmitted = true;
+            }
+        }
+    }
+
+    // 점수 초기화
+    function resetScore() {
+        score = 0;
+        hasSubmitted = false;
+        document.getElementById('score-val').innerText = score;
+        const feedback = document.getElementById('feedback');
+        feedback.className = "feedback";
+        feedback.style.display = "none";
+    }
+
+    // 초기화 실행
+    updateSystem();
+</script>
+
+</body>
+</html>
